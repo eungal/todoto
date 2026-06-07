@@ -1,115 +1,1144 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>하루마다 Todo</title>
-    <style>
-        /* 깔끔하고 감성적인 투두리스트 스타일링 */
-        body { font-family: 'Malgun Gothic', sans-serif; background-color: #f8f9fa; color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); width: 100%; max-width: 400px; }
-        h1 { font-size: 24px; text-align: center; margin-bottom: 5px; color: #5a5a5a; }
-        .sub-title { text-align: center; font-size: 13px; color: #4c6ef5; margin-bottom: 25px; font-weight: bold; }
-        .input-group { display: flex; margin-bottom: 20px; }
-        .input-group input { flex: 1; padding: 10px; border: 1px solid #ced4da; border-radius: 4px 0 0 4px; outline: none; }
-        .input-group button { background: #748ffc; color: white; border: none; padding: 10px 20px; border-radius: 0 4px 4px 0; cursor: pointer; }
-        ul { list-style: none; padding: 0; margin: 0; }
-        li { padding: 12px; border-bottom: 1px solid #f1f3f5; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        li.completed span { text-decoration: line-through; color: #adb5bd; }
-        .delete-btn { background: none; border: none; color: #ff6b6b; cursor: pointer; font-size: 16px; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>오늘의 할 일</title>
+  <meta name="theme-color" content="#f4f1eb" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;800&display=swap');
+    :root{
+      --bg:#F4F1EB; --panel:#ffffff; --text:#1A1A1A; --muted:#8A8A8A; --line:#ECE7DE;
+      --accent:#FF9A7B; --accent-2:#7BC8FF; --accent-3:#A29BFE; --accent-4:#FFBE76;
+      --danger:#FF7B7B; --shadow:0 10px 30px rgba(0,0,0,.08);
+      --p1:#FF7B7B; --p2:#FFBE76; --p3:#B2BEC3;
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Noto Sans KR',-apple-system,BlinkMacSystemFont,sans-serif}
+    button,input,select,textarea{font:inherit}
+    button{cursor:pointer}
+    .app{max-width:1120px;margin:0 auto;min-height:100vh;padding:14px 14px 100px}
+    .top-card,.panel,.sheet,.modal-card{background:var(--panel);border-radius:22px;box-shadow:var(--shadow)}
+    .top-card{padding:16px 16px 14px;position:static;z-index:20;margin-bottom:14px}
+    .main-layout{display:grid;grid-template-columns:380px minmax(0,720px);gap:14px;align-items:start;justify-content:space-between}
+    .left-pane{display:flex;flex-direction:column;gap:10px;position:sticky;top:14px}
+    .right-pane{min-width:0;max-width:720px;width:100%}
+    .title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+    .shell-card{background:var(--panel);border-radius:22px;box-shadow:var(--shadow)}
+    .title h1{margin:0;font-size:23px;line-height:1.2;letter-spacing:-.8px}
+    .title h1 span{color:var(--accent)}
+    .title .sub{margin-top:5px;font-size:12px;color:var(--muted)}
+    .header-actions{display:flex;gap:8px;align-items:center}
+    .today-banner{margin-top:12px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .today-badge{padding:12px 14px;border-radius:18px;background:linear-gradient(135deg,#fff7ef,#f5f0ff);border:1px solid #efe6db;min-width:280px}
+    .today-kicker{font-size:11px;color:#8f8678;font-weight:800;text-transform:uppercase;letter-spacing:.45px}
+    .today-date{margin-top:4px;font-size:23px;font-weight:800;letter-spacing:-.7px}
+    .today-note{margin-top:5px;font-size:12px;color:#8a8175}
+    .sync-card{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;flex:1}
+    .sync-input{width:128px;border:none;background:#f7f4ee;border-radius:12px;padding:10px 12px;font-weight:800;text-transform:uppercase;color:#433d36}
+    .ghost-btn{border:none;background:#fff;border-radius:12px;padding:10px 12px;box-shadow:0 4px 12px rgba(0,0,0,.05);font-weight:800;color:#5a5248}
+    .sync-status{width:100%;font-size:12px;color:#8a8175;text-align:right}
+    .quick-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
+    .quick-left{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .calendar-toggle{border:none;background:#fff;border-radius:16px;padding:10px 12px;box-shadow:0 4px 14px rgba(0,0,0,.06);font-weight:800;color:#4d463f;display:flex;align-items:center;gap:8px}
+    .calendar-toggle .mini-cal{font-size:18px;line-height:1}
+    .calendar-hint{font-size:12px;color:#9b9286;font-weight:700}
+    .left-block{padding:12px}
+    .left-label{font-size:11px;color:#9f9587;font-weight:800;letter-spacing:.3px;text-transform:uppercase;margin-bottom:10px}
+    .pill-btn{border:none;background:#F7F4EE;border-radius:12px;padding:9px 12px;color:#5f5f5f;font-weight:700}
+    .summary{padding:12px;border-radius:18px;background:linear-gradient(135deg,#fff7ef,#f7f6ff)}
+    .summary-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+    .summary-title{font-size:12px;color:var(--muted);font-weight:700}
+    .summary-num{font-size:26px;font-weight:800;letter-spacing:-1px}
+    .summary-num small{font-size:13px;color:var(--muted);font-weight:600}
+    .progress{height:8px;background:#ece6db;border-radius:999px;overflow:hidden;margin-top:10px}
+    .bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-3));border-radius:999px;transition:width .25s}
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-        import { getFirestore, doc, setDoc, collection, addDoc, onSnapshot, updateDoc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+    .month-wrap{margin-top:10px;background:#faf8f4;border:1px solid #efe9df;border-radius:18px;padding:8px}
+    .month-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .month-title{font-size:18px;font-weight:800;letter-spacing:-.5px}
+    .month-nav{width:34px;height:34px;border:none;border-radius:12px;background:white;box-shadow:0 4px 16px rgba(0,0,0,.05)}
+    .week-head,.month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+    .week-head div{text-align:center;font-size:11px;font-weight:700;color:#a39c91;padding:4px 0}
+    .week-head div.wknd{color:#e1927a}
+    .day-cell{min-height:40px;border:none;border-radius:11px;padding:5px 4px;background:white;text-align:left;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 4px 12px rgba(0,0,0,.03);position:relative}
+    .day-cell.other{opacity:.42}
+    .day-cell.today{outline:2px solid rgba(255,154,123,.35)}
+    .day-cell.selected{background:#1a1a1a;color:white}
+    .day-num{font-size:11px;font-weight:800;align-self:flex-end}
+    .day-dots{display:flex;gap:4px;flex-wrap:wrap;min-height:10px}
+    .dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+    .day-count{font-size:8px;color:#b4ab9e}
+    .day-cell.selected .day-count{color:rgba(255,255,255,.55)}
+    .day-cell.selected .dot{background:#fff}
 
-        // 팩트 체크 완료된 사용자님의 고유 Firebase 정보입니다.
-        const firebaseConfig = {
-            apiKey: "AIzaSyAU4VGyDh27SHUqK_xC_rDi0v253oN98j8",
-            authDomain: "todotodo-fe646.firebaseapp.com",
-            projectId: "todotodo-fe646",
-            storageBucket: "todotodo-fe646.firebasestorage.app",
-            messagingSenderId: "756195710803",
-            appId: "1:756195710803:web:551436b04af66d456733a6",
-            measurementId: "G-SWNZLMJ0P4"
-        };
+    .sections{display:flex;flex-direction:column;gap:14px}
+    .section{background:transparent}
+    .section-head{display:flex;align-items:center;gap:8px;padding:0 2px 6px}
+    .section-dot{width:12px;height:12px;border-radius:50%}
+    .section-name{font-size:15px;font-weight:800;flex:1;letter-spacing:-.4px}
+    .icon-btn{border:none;background:#fff;border-radius:12px;width:34px;height:34px;box-shadow:0 4px 12px rgba(0,0,0,.05)}
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+    .category-card{background:#fff;border-radius:22px;box-shadow:var(--shadow);overflow:hidden;border:1px solid #f1eadf}
+    .category-card-head{display:flex;align-items:center;gap:10px;padding:13px 15px;background:linear-gradient(135deg,rgba(255,154,123,.12),rgba(162,155,254,.06));border-bottom:1px solid #f3ece2}
+    .category-card-body{padding:6px 10px 10px}
+    .priority-group{padding:6px 2px}
+    .priority-group + .priority-group{border-top:1px dashed #efe7db}
+    .priority-head{display:flex;align-items:center;gap:8px;padding:0 6px 6px}
+    .priority-pill{font-size:10px;font-weight:800;padding:5px 8px;border-radius:999px}
+    .priority-line{height:2px;flex:1;border-radius:999px}
+    .task-list{min-height:12px;padding:0 4px 2px}
+    .task-list.is-over{background:#eef6ff;border-radius:14px}
+    .empty-drop{padding:8px 10px;color:#c7c0b5;font-size:12px}
 
-        // 🔒 우리 둘만의 고정 비밀 공간 코드 (데이터베이스 저장 위치 이름입니다)
-        const OUR_SECRET_CODE = "harumada_shared_room"; 
+    .task-row{display:flex;align-items:center;gap:8px;padding:10px 8px;border-radius:14px;margin-bottom:4px;background:#fff;border:1px solid #f4f0ea}
+    .task-row:last-child{margin-bottom:0}
+    .drag{border:none;background:#f7f3ed;border-radius:10px;width:26px;height:26px;color:#b3ada2;font-size:15px;cursor:grab;flex-shrink:0}
+    .chk{width:20px;height:20px;border-radius:7px;border:2px solid #ddd;background:white;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .chk.done{background:var(--accent-2);border-color:var(--accent-2);color:white}
+    .task-main{flex:1;min-width:0;border:none;background:transparent;text-align:left;padding:0}
+    .task-text{font-size:13px;line-height:1.4;color:#222;word-break:break-word}
+    .task-text.done{text-decoration:line-through;color:#b8b8b8}
+    .meta-row{margin-top:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+    .meta-chip{font-size:9px;padding:3px 6px;border-radius:999px;background:#f7f4ee;color:#8f8678;font-weight:700}
+    .task-action{font-size:18px;color:#c2b9ad;flex-shrink:0}
 
-        // 페이지가 열리면 자동으로 둘만의 공유 공간으로 연결합니다.
-        window.onload = async function() {
-            await setDoc(doc(db, "rooms", OUR_SECRET_CODE), { createdAt: new Date() }, { merge: true });
-            listenToTodos(OUR_SECRET_CODE);
-        };
+    .add-row{display:flex;gap:8px;align-items:center;padding:8px 2px 2px}
+    .add-input{flex:1;border:none;background:#f7f4ee;border-radius:14px;padding:11px 12px;outline:none}
+    .add-go{border:none;border-radius:14px;padding:11px 12px;background:#1a1a1a;color:white;font-weight:800}
 
-        // 서버의 투두리스트를 실시간으로 감시하여 화면에 바로 반영하는 함수
-        function listenToTodos(roomCode) {
-            const q = query(collection(db, "rooms", roomCode, "todos"), orderBy("createdAt", "asc"));
-            
-            onSnapshot(q, (snapshot) => {
-                const listEl = document.getElementById('todo-list');
-                listEl.innerHTML = '';
-                
-                snapshot.forEach((todoDoc) => {
-                    const data = todoDoc.data();
-                    const li = document.createElement('li');
-                    if (data.completed) li.classList.add('completed');
-                    
-                    li.innerHTML = `
-                        <span>${data.text}</span>
-                        <button class="delete-btn" onclick="event.stopPropagation(); deleteTodo('${todoDoc.id}')">×</button>
-                    `;
-                    
-                    // 목록 클릭 시 완료 상태 실시간 토글
-                    li.onclick = async () => {
-                        await updateDoc(doc(db, "rooms", roomCode, "todos", todoDoc.id), {
-                            completed: !data.completed
-                        });
-                    };
-                    
-                    listEl.appendChild(li);
-                });
-            });
-        }
+    .fab{position:fixed;right:18px;bottom:18px;width:58px;height:58px;border:none;border-radius:20px;background:#1a1a1a;color:white;font-size:28px;box-shadow:0 12px 28px rgba(0,0,0,.22);z-index:30}
 
-        // 투두 추가하기 (서버 데이터베이스로 바로 전송)
-        window.addTodo = async function() {
-            const input = document.getElementById('todo-input');
-            if (!input.value.trim()) return;
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:50;padding:0}
+    .sheet,.modal-card{width:min(460px,100%);border-radius:28px 28px 0 0;padding:22px 18px 28px;max-height:88vh;overflow:auto}
+    .sheet-title,.modal-title{font-size:19px;font-weight:800;letter-spacing:-.5px}
+    .sheet-sub{margin-top:6px;color:#7f7b74;font-size:13px;line-height:1.5}
+    .sheet-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+    .sheet-btn{border:none;border-radius:16px;padding:15px 14px;font-weight:800;text-align:left}
+    .sheet-btn small{display:block;margin-top:5px;color:#8c8578;font-weight:600}
+    .sheet-btn.primary{background:#fff3ef;color:#7c4e3f}
+    .sheet-btn.soft{background:#f6f4ef;color:#554f47}
+    .sheet-btn.warn{background:#fff0f0;color:#a84747}
+    .sheet-close{margin-top:12px;width:100%;border:none;border-radius:16px;padding:14px;background:#1a1a1a;color:white;font-weight:800}
 
-            await addDoc(collection(db, "rooms", OUR_SECRET_CODE, "todos"), {
-                text: input.value.trim(),
-                completed: false,
-                createdAt: new Date()
-            });
-            input.value = '';
-        };
+    .field{margin-top:14px}
+    .label{display:block;font-size:12px;color:#8a8175;font-weight:800;margin-bottom:8px}
+    .text-input,.select,.date-input,.textarea{width:100%;border:1px solid #ece5da;background:#faf8f4;border-radius:16px;padding:14px;outline:none}
+    .textarea{min-height:104px;resize:vertical}
+    .btn-row{display:flex;gap:10px;margin-top:18px}
+    .btn{flex:1;border:none;border-radius:16px;padding:15px;font-weight:800}
+    .btn.cancel{background:#f6f4ef;color:#6d675f}
+    .btn.save{background:#1a1a1a;color:white}
+    .btn.accent{background:var(--accent);color:white}
 
-        // 투두 삭제하기 (서버 데이터베이스에서 제거)
-        window.deleteTodo = async function(id) {
-            if (confirm("삭제하시겠습니까?")) {
-                await deleteDoc(doc(db, "rooms", OUR_SECRET_CODE, "todos", id));
-            }
-        };
-    </script>
+    .option-row{display:flex;gap:8px;flex-wrap:wrap}
+    .option-chip{border:none;border-radius:999px;padding:10px 12px;background:#f7f4ee;color:#726b62;font-weight:800}
+    .option-chip.on{background:#1a1a1a;color:white}
+    .month-picker-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:8px}
+    .month-day{border:none;border-radius:12px;padding:11px 0;background:#f7f4ee;color:#6b655d;font-weight:800}
+    .month-day.on{background:var(--accent-3);color:white}
+    .help{font-size:12px;color:#9b9286;line-height:1.5;margin-top:8px}
+    .mini{font-size:12px;color:#91887c}
+
+    .empty-state{padding:28px 18px;text-align:center;color:#aa9f90;background:white;border-radius:22px;box-shadow:var(--shadow)}
+    .moon-btn{border:none;background:#1a1a1a;color:#fff;border-radius:14px;padding:9px 12px;font-weight:800}
+    .reflect-card{background:linear-gradient(145deg,#1f1730,#36275a);color:#fff;border-radius:22px;padding:15px;box-shadow:var(--shadow)}
+    .reflect-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+    .reflect-title{font-size:16px;font-weight:800;letter-spacing:-.4px}
+    .reflect-sub{font-size:12px;color:rgba(255,255,255,.58);margin-top:4px}
+    .reflect-badge{font-size:11px;color:#ffcf86;background:rgba(255,190,118,.14);padding:5px 8px;border-radius:999px;font-weight:700}
+    .moon-face{display:flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:16px;background:rgba(255,255,255,.08);font-size:24px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+    .mood-row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+    .mood-chip{border:none;border-radius:999px;padding:10px 12px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.74);font-weight:800}
+    .mood-chip.on{background:#ffbe76;color:#2a1f10}
+    .reflect-text{width:100%;margin-top:12px;border:none;background:rgba(255,255,255,.08);color:#fff;border-radius:16px;padding:14px;min-height:88px;outline:none;resize:vertical}
+    .reflect-text::placeholder{color:rgba(255,255,255,.35)}
+    .reflect-actions{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:12px}
+    .reflect-save{border:none;border-radius:14px;padding:12px 14px;background:#ffbe76;color:#2a1f10;font-weight:800}
+    .reflect-note{font-size:12px;color:rgba(255,255,255,.45)}
+
+    @media (max-width:900px){
+      .app{max-width:430px;padding:12px 12px 100px}
+      .main-layout{grid-template-columns:1fr}
+      .left-pane{position:static}
+      .sync-card{justify-content:flex-start}
+      .sync-status{text-align:left}
+    }
+    @media (max-width:390px){
+      .app{padding:10px 10px 110px}
+      .day-cell{min-height:42px}
+      .sheet-actions{grid-template-columns:1fr}
+    }
+  </style>
 </head>
 <body>
+  <div id="app"></div>
+  <script>
+    const STORAGE_KEY = 'worktodo-html-v6';
+    const LEGACY_KEYS = ['worktodo-v4','worktodo-v3'];
+    const DEFAULT_CATS = [
+      {id:'c1',name:'🌅 오전 업무',color:'#FF9A7B',order:0},
+      {id:'c2',name:'☀️ 오후 업무',color:'#7BC8FF',order:1},
+      {id:'c3',name:'📌 기타',color:'#A29BFE',order:2}
+    ];
+    const PRIORITY_META = {
+      1:{label:'1순위',color:'#FF7B7B'},
+      2:{label:'2순위',color:'#FFBE76'},
+      3:{label:'3순위',color:'#B2BEC3'}
+    };
+    const WEEK_LABELS = [
+      {v:1,l:'월'},{v:2,l:'화'},{v:3,l:'수'},{v:4,l:'목'},{v:5,l:'금'},{v:6,l:'토'},{v:0,l:'일'}
+    ];
+    const MONTH_LABELS = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+    const MOODS = [
+      {v:'😄',l:'최고'},
+      {v:'😊',l:'좋음'},
+      {v:'😐',l:'보통'},
+      {v:'😣',l:'힘듦'},
+      {v:'😩',l:'최악'}
+    ];
+    const REFL_STORAGE_KEY = 'worktodo-reflections-v1';
+    const CURRENT_ROOM_KEY = 'worktodo-current-room';
+    const ROOM_PREFIX = 'worktodo-room-';
+    const CLOUD_SYNC_CONFIG = {
+      apiKey: 'AIzaSyAU4VGyDh27SHUqK_xC_rDi0v253oN98j8',
+      projectId: 'todotodo-fe646',
+      databaseURL: 'https://todotodo-fe646-default-rtdb.firebaseio.com'
+    };
+    const CLOUD_POLL_MS = 8000;
 
-<div class="container">
-    <h1>하루마다 Todo</h1>
-    <div class="sub-title">🔒 실시간 공유 연동 중</div>
+    const state = {
+      cats: [],
+      tasks: [],
+      routines: [],
+      selectedDate: todayStr(),
+      currentMonth: monthKey(todayStr()),
+      modal: null,
+      dragTaskId: null,
+      showReflection: true,
+      showCalendar: true,
+      reflections: {},
+      reflectionDraftDate: '',
+      reflectionDraft: { mood:'', memo:'' },
+      roomCode: '',
+      roomInput: '',
+      syncNotice: '내 기기 저장 중',
+      lastRemoteUpdatedAt: 0,
+      lastSeenToday: todayStr()
+    };
 
-    <div class="input-group">
-        <input type="text" id="todo-input" placeholder="할 일을 입력하세요..." onkeypress="if(event.keyCode==13) addTodo()">
-        <button onclick="addTodo()">추가</button>
-    </div>
+    function uid(){ return 'id-' + Date.now() + '-' + Math.random().toString(36).slice(2,7); }
+    function parseDate(s){ const [y,m,d] = s.split('-').map(Number); return new Date(y,m-1,d); }
+    function fmtDate(s){ return parseDate(s).toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'}); }
+    function todayStr(){ const d=new Date(); return toDateStr(d); }
+    function toDateStr(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+    function toMonthStr(y,m){ return `${y}-${String(m).padStart(2,'0')}`; }
+    function monthKey(dateLike){
+      const d = typeof dateLike === 'string' && dateLike.includes('-') && dateLike.split('-').length===3 ? parseDate(dateLike) : (typeof dateLike === 'string' ? new Date(dateLike+'-01') : dateLike);
+      return toMonthStr(d.getFullYear(), d.getMonth()+1);
+    }
+    function esc(s){ return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+    function deepCopy(v){ return JSON.parse(JSON.stringify(v)); }
+    function daysBetween(a,b){ return Math.floor((parseDate(b) - parseDate(a)) / 86400000); }
+    function isSameMonth(monthStr,dateStr){ return monthKey(dateStr) === monthStr; }
+    function sortCats(){ state.cats.sort((a,b)=>a.order-b.order); }
+    function taskGroupKey(t){ return `${t.date}__${t.catId}__${t.priority}`; }
+    function normalizeOrders(){
+      const groups = {};
+      state.tasks.forEach(t=>{
+        const key = taskGroupKey(t);
+        groups[key] ||= [];
+        groups[key].push(t);
+      });
+      Object.values(groups).forEach(list=> list.sort((a,b)=>a.order-b.order).forEach((t,i)=> t.order=i));
+    }
+    function nextOrder(catId, priority, date){
+      return state.tasks.filter(t=>t.catId===catId && t.priority===priority && t.date===date).length;
+    }
+    function findTask(id){ return state.tasks.find(t=>t.id===id); }
+    function findRoutine(id){ return state.routines.find(r=>r.id===id); }
+    function todayFullLabel(dateStr=todayStr()){ return parseDate(dateStr).toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'long'}); }
+    function currentPayload(){ return { cats:state.cats, tasks:state.tasks, routines:state.routines, reflections:state.reflections || {} }; }
+    function roomCodeDisplay(code){
+      const raw = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,10);
+      return raw.length > 4 ? `${raw.slice(0,4)}-${raw.slice(4)}` : raw;
+    }
+    function normalizeRoomCode(v){ return roomCodeDisplay(v).replace(/-/g,''); }
+    function generateRoomCode(){ return roomCodeDisplay(Math.random().toString(36).slice(2,10)); }
+    function activeStorageKey(){ return state.roomCode ? ROOM_PREFIX + state.roomCode : STORAGE_KEY; }
+    function canUseCloud(){ return !!(CLOUD_SYNC_CONFIG.databaseURL); }
+    function realtimeRoomUrl(code){ return `${CLOUD_SYNC_CONFIG.databaseURL}/rooms/${encodeURIComponent(code)}.json`; }
+    function applyPayload(data){
+      state.cats = Array.isArray(data?.cats) && data.cats.length ? data.cats : deepCopy(DEFAULT_CATS);
+      state.tasks = Array.isArray(data?.tasks) ? data.tasks.map(t=>({priority:1,done:false,...t,date:toDateStr(parseDate(t.date||todayStr()))})) : [];
+      state.routines = Array.isArray(data?.routines) ? data.routines.map(r=>({
+        ...r,
+        startDate: toDateStr(parseDate(r.startDate || todayStr())),
+        endDate: r.endDate ? toDateStr(parseDate(r.endDate)) : '',
+        excludedDates: Array.isArray(r.excludedDates) ? r.excludedDates.map(d=>toDateStr(parseDate(d))) : []
+      })) : [];
+      if(data?.reflections && typeof data.reflections === 'object'){
+        state.reflections = data.reflections;
+      } else {
+        try{ state.reflections = JSON.parse(localStorage.getItem(REFL_STORAGE_KEY) || '{}') || {}; }catch{ state.reflections = {}; }
+      }
+      normalizeOrders();
+      sortCats();
+    }
+    function persistLocalPayload(){
+      localStorage.setItem(activeStorageKey(), JSON.stringify(currentPayload()));
+      if(state.roomCode) localStorage.setItem(CURRENT_ROOM_KEY, state.roomCode);
+    }
+    async function cloudLoadRoom(code){
+      if(!canUseCloud() || !code) return null;
+      try{
+        const res = await fetch(realtimeRoomUrl(code));
+        if(!res.ok) return null;
+        const json = await res.json();
+        if(!json) return null;
+        const payload = json?.payload || {};
+        const updatedAt = Number(json?.updatedAt || 0);
+        return { payload, updatedAt };
+      }catch(e){
+        return null;
+      }
+    }
+    async function cloudSaveRoom(code, payload){
+      if(!canUseCloud() || !code) return false;
+      try{
+        const ts = Date.now();
+        const res = await fetch(realtimeRoomUrl(code), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ payload, updatedAt: ts })
+        });
+        if(res.ok) state.lastRemoteUpdatedAt = ts;
+        return res.ok;
+      }catch(e){
+        return false;
+      }
+    }
+    let remoteSaveSeq = 0;
+    function save(){
+      persistLocalPayload();
+      const code = state.roomCode;
+      if(!code){ state.syncNotice = '내 기기 저장 중'; return; }
+      if(!canUseCloud()){ state.syncNotice = `입장코드 ${roomCodeDisplay(code)} · 이 기기 저장`; return; }
+      const seq = ++remoteSaveSeq;
+      state.syncNotice = '코드 동기화 중...';
+      cloudSaveRoom(code, currentPayload()).then(ok=>{
+        if(seq !== remoteSaveSeq) return;
+        state.syncNotice = ok ? `입장코드 ${roomCodeDisplay(code)} 동기화됨` : '동기화 실패 · 잠시 후 다시 시도';
+        render();
+      });
+    }
+    function saveReflections(){ save(); }
+    function syncReflectionDraft(){
+      if(state.reflectionDraftDate === state.selectedDate) return;
+      const saved = state.reflections[state.selectedDate] || {};
+      state.reflectionDraftDate = state.selectedDate;
+      state.reflectionDraft = { mood: saved.mood || '', memo: saved.memo || '' };
+    }
+    function saveReflectionEntry(){
+      const memoEl = document.getElementById('reflection-memo');
+      if(memoEl) state.reflectionDraft.memo = memoEl.value;
+      state.reflections[state.selectedDate] = {
+        mood: state.reflectionDraft.mood || '',
+        memo: state.reflectionDraft.memo || '',
+        savedAt: new Date().toISOString()
+      };
+      saveReflections();
+      render();
+    }
+    async function createRoomAndSave(){
+      state.roomCode = normalizeRoomCode(generateRoomCode());
+      state.roomInput = roomCodeDisplay(state.roomCode);
+      localStorage.setItem(CURRENT_ROOM_KEY, state.roomCode);
+      persistLocalPayload();
+      if(canUseCloud()){
+        state.syncNotice = '새 입장코드 만드는 중...';
+        render();
+        const ok = await cloudSaveRoom(state.roomCode, currentPayload());
+        state.syncNotice = ok ? `새 입장코드 ${roomCodeDisplay(state.roomCode)} 생성 완료` : '새 코드 저장 실패';
+      }else{
+        state.syncNotice = `입장코드 ${roomCodeDisplay(state.roomCode)} · 이 기기 저장`;
+      }
+      startRoomPolling();
+      render();
+    }
+    async function joinRoomFromInput(){
+      const rawValue = document.getElementById('room-code-input')?.value || state.roomInput || '';
+      const code = normalizeRoomCode(rawValue);
+      if(!code){ alert('입장코드를 입력해줘.'); return; }
+      state.roomCode = code;
+      state.roomInput = roomCodeDisplay(code);
+      localStorage.setItem(CURRENT_ROOM_KEY, code);
+      const localRaw = localStorage.getItem(activeStorageKey());
+      if(localRaw){
+        try{ applyPayload(JSON.parse(localRaw)); }catch(e){}
+      }
+      if(canUseCloud()){
+        state.syncNotice = '입장코드 불러오는 중...';
+        render();
+        const remote = await cloudLoadRoom(code);
+        if(remote?.payload && Object.keys(remote.payload).length){
+          applyPayload(remote.payload);
+          persistLocalPayload();
+          state.lastRemoteUpdatedAt = remote.updatedAt || 0;
+          state.syncNotice = `입장코드 ${roomCodeDisplay(code)} 연결됨`;
+        }else{
+          persistLocalPayload();
+          const ok = await cloudSaveRoom(code, currentPayload());
+          state.syncNotice = ok ? `입장코드 ${roomCodeDisplay(code)} 새로 생성됨` : '새 코드 생성 실패';
+        }
+      }else{
+        persistLocalPayload();
+        state.syncNotice = `입장코드 ${roomCodeDisplay(code)} · 이 기기 저장`;
+      }
+      startRoomPolling();
+      render();
+    }
+    async function copyRoomCode(){
+      if(!state.roomCode){ alert('먼저 입장코드를 만들어줘.'); return; }
+      const text = roomCodeDisplay(state.roomCode);
+      try{
+        await navigator.clipboard.writeText(text);
+        state.syncNotice = `입장코드 ${text} 복사됨`;
+        render();
+      }catch(e){
+        alert(`입장코드: ${text}`);
+      }
+    }
+    async function hydrateRoomFromCloud(){
+      if(!state.roomCode || !canUseCloud()) return;
+      const remote = await cloudLoadRoom(state.roomCode);
+      if(remote?.payload && Object.keys(remote.payload).length){
+        applyPayload(remote.payload);
+        persistLocalPayload();
+        state.lastRemoteUpdatedAt = remote.updatedAt || 0;
+        state.syncNotice = `입장코드 ${roomCodeDisplay(state.roomCode)} 연결됨`;
+      }
+    }
+    function startRoomPolling(){
+      clearInterval(window.__worktodoPollTimer);
+      if(!state.roomCode || !canUseCloud()) return;
+      window.__worktodoPollTimer = setInterval(async()=>{
+        if(document.hidden) return;
+        const remote = await cloudLoadRoom(state.roomCode);
+        if(remote?.updatedAt && remote.updatedAt > state.lastRemoteUpdatedAt){
+          applyPayload(remote.payload);
+          state.lastRemoteUpdatedAt = remote.updatedAt;
+          persistLocalPayload();
+          state.syncNotice = '다른 기기 변경사항 반영됨';
+          render();
+        }
+      }, CLOUD_POLL_MS);
+    }
+    function autoAdvanceToToday(force=false){
+      const now = todayStr();
+      if(force || state.lastSeenToday !== now){
+        state.lastSeenToday = now;
+        state.selectedDate = now;
+        state.currentMonth = monthKey(now);
+        state.reflectionDraftDate = '';
+        ensureVisibleRoutineData();
+        render();
+      }
+    }
+    function startDayWatcher(){
+      clearInterval(window.__worktodoDayTimer);
+      state.lastSeenToday = todayStr();
+      window.__worktodoDayTimer = setInterval(()=> autoAdvanceToToday(false), 60000);
+      document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) autoAdvanceToToday(false); }, { passive:true });
+    }
+    function load(){
+      state.roomCode = normalizeRoomCode(localStorage.getItem(CURRENT_ROOM_KEY) || '');
+      state.roomInput = roomCodeDisplay(state.roomCode);
+      let raw = localStorage.getItem(activeStorageKey());
+      if(!raw && !state.roomCode){
+        for(const k of LEGACY_KEYS){ if(localStorage.getItem(k)){ raw = localStorage.getItem(k); break; } }
+      }
+      if(raw){
+        try{
+          applyPayload(JSON.parse(raw));
+        }catch(e){
+          state.cats = deepCopy(DEFAULT_CATS);
+          state.tasks = [];
+          state.routines = [];
+          state.reflections = {};
+        }
+      } else {
+        const today = todayStr();
+        state.cats = deepCopy(DEFAULT_CATS);
+        state.tasks = [
+          {id:uid(),catId:'c1',text:'이메일 및 슬랙 확인',done:false,order:0,date:today,priority:1},
+          {id:uid(),catId:'c1',text:'팀 데일리 스탠드업',done:false,order:1,date:today,priority:1},
+          {id:uid(),catId:'c2',text:'온보딩 자료 학습',done:false,order:0,date:today,priority:2},
+          {id:uid(),catId:'c2',text:'보고서 초안 작성',done:false,order:0,date:today,priority:1}
+        ];
+        state.routines = [];
+        try{ state.reflections = JSON.parse(localStorage.getItem(REFL_STORAGE_KEY) || '{}') || {}; }catch{ state.reflections = {}; }
+      }
+      normalizeOrders();
+      sortCats();
+      state.selectedDate = todayStr();
+      state.currentMonth = monthKey(state.selectedDate);
+      state.lastSeenToday = todayStr();
+      state.syncNotice = state.roomCode
+        ? (canUseCloud() ? `입장코드 ${roomCodeDisplay(state.roomCode)} 연결 준비됨` : `입장코드 ${roomCodeDisplay(state.roomCode)} · 이 기기 저장`)
+        : '내 기기 저장 중';
+    }
+    function monthParts(monthStr){ const [y,m] = monthStr.split('-').map(Number); return {y,m}; }
+    function shiftMonth(monthStr, diff){ const {y,m} = monthParts(monthStr); const d = new Date(y,m-1+diff,1); return toMonthStr(d.getFullYear(), d.getMonth()+1); }
+    function monthCells(monthStr){
+      const {y,m} = monthParts(monthStr);
+      const first = new Date(y,m-1,1);
+      const startOffset = (first.getDay()+6)%7;
+      const start = new Date(y,m-1,1-startOffset);
+      const cells = [];
+      for(let i=0;i<42;i++){
+        const d = new Date(start);
+        d.setDate(start.getDate()+i);
+        cells.push({date:toDateStr(d), inMonth:d.getMonth()===(m-1)});
+      }
+      return cells;
+    }
+    function taskCountByDate(date){ return state.tasks.filter(t=>t.date===date).length; }
+    function pendingCountByDate(date){ return state.tasks.filter(t=>t.date===date && !t.done).length; }
+    function category(catId){ return state.cats.find(c=>c.id===catId); }
 
-    <ul id="todo-list"></ul>
-</div>
+    function routineOccursOn(r, dateStr){
+      if(dateStr < r.startDate) return false;
+      if(r.endDate && dateStr > r.endDate) return false;
+      const date = parseDate(dateStr);
+      const start = parseDate(r.startDate);
+      const diff = daysBetween(r.startDate, dateStr);
+      const day = date.getDate();
+      const dow = date.getDay();
+      switch(r.repeatType){
+        case 'daily':
+          return diff >= 0;
+        case 'weekly':
+          return (r.weekdays||[]).includes(dow);
+        case 'biweekly': {
+          if(!(r.weekdays||[]).includes(dow)) return false;
+          return Math.floor(diff/7) % 2 === 0;
+        }
+        case 'monthly':
+          return (r.monthDays||[]).includes(day);
+        case 'yearly':
+          return date.getMonth() === r.yearMonth && day === r.yearDay;
+        default:
+          return false;
+      }
+    }
 
+    function ensureRoutineInstancesForMonth(monthStr){
+      const cells = monthCells(monthStr);
+      const first = cells[0].date;
+      const last = cells[cells.length-1].date;
+      let changed = false;
+      state.routines.forEach(r=>{
+        for(let d = parseDate(first); toDateStr(d) <= last; d.setDate(d.getDate()+1)){
+          const dateStr = toDateStr(d);
+          if(!routineOccursOn(r, dateStr)) continue;
+          if((r.excludedDates||[]).includes(dateStr)) continue;
+          const exists = state.tasks.some(t => t.routineId===r.id && t.occurrenceDate===dateStr);
+          if(exists) continue;
+          state.tasks.push({
+            id: uid(),
+            catId: r.catId,
+            text: r.text,
+            done: false,
+            order: nextOrder(r.catId, r.priority, dateStr),
+            date: dateStr,
+            priority: r.priority,
+            routineId: r.id,
+            occurrenceDate: dateStr,
+            routineSource: true
+          });
+          changed = true;
+        }
+      });
+      if(changed){ normalizeOrders(); save(); }
+    }
+
+    function ensureVisibleRoutineData(){
+      ensureRoutineInstancesForMonth(state.currentMonth);
+      const selectedMonth = monthKey(state.selectedDate);
+      if(selectedMonth !== state.currentMonth) ensureRoutineInstancesForMonth(selectedMonth);
+    }
+
+    function getSelectedDayTasks(){
+      return state.tasks.filter(t=>t.date===state.selectedDate).sort((a,b)=>{
+        if(a.catId !== b.catId){
+          const ca = category(a.catId)?.order ?? 999;
+          const cb = category(b.catId)?.order ?? 999;
+          return ca-cb;
+        }
+        if(a.priority !== b.priority) return a.priority-b.priority;
+        return a.order-b.order;
+      });
+    }
+
+    function openModal(type, payload={}){ state.modal = {type, ...payload}; render(); }
+    function closeModal(){ state.modal = null; render(); }
+
+    function addTask(catId){
+      const input = document.querySelector(`.add-input[data-cat="${catId}"]`);
+      const text = input?.value.trim();
+      if(!text) return;
+      state.tasks.push({
+        id: uid(), catId, text, done:false, order:nextOrder(catId,1,state.selectedDate), date:state.selectedDate, priority:1
+      });
+      save();
+      render();
+    }
+    function toggleDone(taskId){ const t=findTask(taskId); if(!t) return; t.done=!t.done; save(); render(); }
+
+    function deleteTask(taskId){
+      const t = findTask(taskId);
+      if(!t) return;
+      if(t.routineId && t.occurrenceDate){
+        const r = findRoutine(t.routineId);
+        if(r){
+          r.excludedDates ||= [];
+          if(!r.excludedDates.includes(t.occurrenceDate)) r.excludedDates.push(t.occurrenceDate);
+        }
+      }
+      state.tasks = state.tasks.filter(x=>x.id!==taskId);
+      normalizeOrders();
+      save();
+      closeModal();
+    }
+
+    function saveTaskEdit(){
+      const task = findTask(state.modal.taskId);
+      if(!task) return;
+      const nextText = document.getElementById('edit-task-text')?.value.trim();
+      const nextCatId = document.getElementById('edit-task-cat')?.value;
+      if(!nextText) return;
+      const oldCat = task.catId;
+      task.text = nextText;
+      if(nextCatId && nextCatId !== task.catId){
+        task.catId = nextCatId;
+        task.order = nextOrder(nextCatId, task.priority, task.date);
+      }
+      if(task.routineId){
+        const r = findRoutine(task.routineId);
+        if(r && task.occurrenceDate === task.date){
+          r.text = nextText;
+          if(oldCat !== nextCatId) r.catId = nextCatId;
+        }
+      }
+      normalizeOrders();
+      save();
+      closeModal();
+    }
+
+    function moveTaskDate(){
+      const task = findTask(state.modal.taskId);
+      if(!task) return;
+      const newDate = document.getElementById('move-task-date')?.value;
+      if(!newDate) return;
+      if(task.routineId && task.occurrenceDate){
+        const r = findRoutine(task.routineId);
+        if(r){
+          r.excludedDates ||= [];
+          if(!r.excludedDates.includes(task.occurrenceDate)) r.excludedDates.push(task.occurrenceDate);
+        }
+        delete task.routineId;
+        delete task.occurrenceDate;
+        delete task.routineSource;
+      }
+      task.date = newDate;
+      task.done = false;
+      task.order = nextOrder(task.catId, task.priority, newDate);
+      state.selectedDate = newDate;
+      state.currentMonth = monthKey(newDate);
+      ensureVisibleRoutineData();
+      normalizeOrders();
+      save();
+      closeModal();
+    }
+
+    function saveCategory(){
+      const name = document.getElementById('cat-name')?.value.trim();
+      const color = document.getElementById('cat-color')?.value || '#FF9A7B';
+      if(!name) return;
+      if(state.modal.mode === 'add'){
+        state.cats.push({id:uid(),name,color,order:state.cats.length});
+      }else{
+        const cat = category(state.modal.catId);
+        if(cat){ cat.name=name; cat.color=color; }
+      }
+      sortCats();
+      save();
+      closeModal();
+    }
+
+    function removeCategory(catId){
+      if(!confirm('카테고리를 삭제하면 그 안의 할 일과 루틴도 함께 삭제됩니다.')) return;
+      state.cats = state.cats.filter(c=>c.id!==catId);
+      state.tasks = state.tasks.filter(t=>t.catId!==catId);
+      state.routines = state.routines.filter(r=>r.catId!==catId);
+      normalizeOrders();
+      save();
+      render();
+    }
+
+    function buildRoutineDefaults(task){
+      const date = parseDate(task.date);
+      return {
+        text: task.text,
+        startDate: task.date,
+        endDate: '',
+        repeatType: 'weekly',
+        weekdays: [date.getDay()],
+        monthDays: [date.getDate()],
+        yearMonth: date.getMonth(),
+        yearDay: date.getDate()
+      };
+    }
+
+    function syncRoutineDraft(){
+      if(!state.modal || state.modal.type !== 'routine') return;
+      const textEl = document.getElementById('routine-text');
+      const startEl = document.getElementById('routine-start');
+      const endEl = document.getElementById('routine-end');
+      if(textEl) state.modal.form.text = textEl.value;
+      if(startEl && startEl.value) state.modal.form.startDate = startEl.value;
+      if(endEl) state.modal.form.endDate = endEl.value;
+    }
+    function toggleWeekday(v){
+      syncRoutineDraft();
+      state.modal.form.weekdays ||= [];
+      const arr = state.modal.form.weekdays;
+      state.modal.form.weekdays = arr.includes(v) ? arr.filter(x=>x!==v) : [...arr, v].sort((a,b)=>a-b);
+      render();
+    }
+    function toggleMonthDay(v){
+      syncRoutineDraft();
+      state.modal.form.monthDays ||= [];
+      const arr = state.modal.form.monthDays;
+      state.modal.form.monthDays = arr.includes(v) ? arr.filter(x=>x!==v) : [...arr, v].sort((a,b)=>a-b);
+      render();
+    }
+
+    function deleteRoutineSeries(routineId){
+      if(!routineId) return;
+      if(!confirm('이 루틴을 삭제할까요? 연결된 반복 일정도 함께 삭제돼요.')) return;
+      state.routines = state.routines.filter(r=>r.id !== routineId);
+      state.tasks = state.tasks.filter(t=>t.routineId !== routineId);
+      normalizeOrders();
+      save();
+      closeModal();
+    }
+
+    function saveRoutine(){
+      const task = findTask(state.modal.taskId);
+      if(!task) return;
+      const form = state.modal.form;
+      form.text = document.getElementById('routine-text')?.value.trim() || task.text;
+      form.startDate = document.getElementById('routine-start')?.value || task.date;
+      form.endDate = document.getElementById('routine-end')?.value || '';
+      form.repeatType = document.getElementById('routine-repeat')?.value || 'weekly';
+      if(!form.text) return;
+      if(form.endDate && form.endDate < form.startDate){ alert('종료 날짜는 시작 날짜보다 빠를 수 없어요.'); return; }
+      if((form.repeatType==='weekly' || form.repeatType==='biweekly') && !(form.weekdays||[]).length){ alert('반복 요일을 선택해주세요.'); return; }
+      if(form.repeatType==='monthly' && !(form.monthDays||[]).length){ alert('매월 반복 날짜를 선택해주세요.'); return; }
+
+      const routine = {
+        id: uid(),
+        catId: task.catId,
+        priority: task.priority,
+        text: form.text,
+        startDate: form.startDate,
+        endDate: form.endDate,
+        repeatType: form.repeatType,
+        weekdays: deepCopy(form.weekdays||[]),
+        monthDays: deepCopy(form.monthDays||[]),
+        yearMonth: parseDate(form.startDate).getMonth(),
+        yearDay: parseDate(form.startDate).getDate(),
+        excludedDates: []
+      };
+      state.routines.push(routine);
+      task.routineId = routine.id;
+      task.occurrenceDate = task.date;
+      task.routineSource = true;
+      task.text = form.text;
+      ensureVisibleRoutineData();
+      normalizeOrders();
+      save();
+      closeModal();
+    }
+
+    function moveTaskByDrop(taskId, targetCatId, targetPriority, beforeTaskId){
+      const task = findTask(taskId);
+      if(!task) return;
+      const oldGroup = `${task.date}-${task.catId}-${task.priority}`;
+      const newGroup = `${task.date}-${targetCatId}-${targetPriority}`;
+      state.tasks = state.tasks.filter(t=>t.id!==taskId);
+      const targetList = state.tasks
+        .filter(t=>t.date===task.date && t.catId===targetCatId && t.priority===targetPriority)
+        .sort((a,b)=>a.order-b.order);
+      const insertIndex = beforeTaskId ? Math.max(0, targetList.findIndex(t=>t.id===beforeTaskId)) : targetList.length;
+      task.catId = targetCatId;
+      task.priority = Number(targetPriority);
+      targetList.splice(insertIndex,0,task);
+      targetList.forEach((t,i)=> t.order=i);
+      state.tasks.push(...targetList.filter(t=>t.id===task.id));
+      normalizeOrders();
+      if(task.routineId && task.occurrenceDate===task.date){
+        const r = findRoutine(task.routineId);
+        if(r){ r.catId = task.catId; r.priority = task.priority; }
+      }
+      save();
+      render();
+    }
+    function renderModal(){
+      if(!state.modal) return '';
+      if(state.modal.type === 'taskSheet'){
+        const task = findTask(state.modal.taskId);
+        if(!task) return '';
+        const cat = category(task.catId);
+        return `
+          <div class="overlay" data-action="overlay-close">
+            <div class="sheet">
+              <div class="sheet-title">할 일 관리</div>
+              <div class="sheet-sub">${esc(task.text)}<br><span class="mini">${esc(cat?.name||'')} · ${fmtDate(task.date)}</span></div>
+              <div class="sheet-actions">
+                <button class="sheet-btn primary" data-action="open-edit-task" data-task-id="${task.id}">수정하기<small>내용이나 카테고리 수정</small></button>
+                <button class="sheet-btn warn" data-action="delete-task" data-task-id="${task.id}">삭제하기<small>이 할 일을 삭제</small></button>
+                <button class="sheet-btn soft" data-action="open-move-task" data-task-id="${task.id}">날짜 바꾸기<small>원하는 날짜로 이동</small></button>
+                ${task.routineId ? `<button class="sheet-btn warn" data-action="delete-routine" data-routine-id="${task.routineId}">루틴 삭제<small>연결된 반복 일정 전체 삭제</small></button>` : `<button class="sheet-btn soft" data-action="open-routine" data-task-id="${task.id}">루틴 등록하기<small>반복 일정으로 만들기</small></button>`}
+              </div>
+              <button class="sheet-close" data-action="close-modal">닫기</button>
+            </div>
+          </div>`;
+      }
+      if(state.modal.type === 'category'){
+        const cat = state.modal.catId ? category(state.modal.catId) : null;
+        return `
+          <div class="overlay" data-action="overlay-close">
+            <div class="modal-card">
+              <div class="modal-title">${state.modal.mode==='add'?'새 카테고리 추가':'카테고리 수정'}</div>
+              <div class="field"><label class="label">카테고리 이름</label><input id="cat-name" class="text-input" value="${esc(cat?.name || '')}" placeholder="예: 개인, 프로젝트, 공부"></div>
+              <div class="field"><label class="label">카테고리 색상</label><input id="cat-color" class="date-input" type="color" value="${esc(cat?.color || '#FF9A7B')}"></div>
+              <div class="btn-row"><button class="btn cancel" data-action="close-modal">취소</button><button class="btn save" data-action="save-category">저장</button></div>
+            </div>
+          </div>`;
+      }
+      if(state.modal.type === 'editTask'){
+        const task = findTask(state.modal.taskId);
+        if(!task) return '';
+        return `
+          <div class="overlay" data-action="overlay-close">
+            <div class="modal-card">
+              <div class="modal-title">할 일 수정</div>
+              <div class="field"><label class="label">내용</label><textarea id="edit-task-text" class="textarea">${esc(task.text)}</textarea></div>
+              <div class="field"><label class="label">카테고리</label>
+                <select id="edit-task-cat" class="select">
+                  ${state.cats.map(c=>`<option value="${c.id}" ${c.id===task.catId?'selected':''}>${esc(c.name)}</option>`).join('')}
+                </select>
+              </div>
+              <div class="help">우선순위는 목록에서 드래그해서 바꿀 수 있어요.</div>
+              <div class="btn-row"><button class="btn cancel" data-action="close-modal">취소</button><button class="btn save" data-action="save-task-edit">저장</button></div>
+            </div>
+          </div>`;
+      }
+      if(state.modal.type === 'moveTask'){
+        const task = findTask(state.modal.taskId);
+        if(!task) return '';
+        return `
+          <div class="overlay" data-action="overlay-close">
+            <div class="modal-card">
+              <div class="modal-title">날짜 바꾸기</div>
+              <div class="field"><label class="label">이동할 날짜</label><input id="move-task-date" class="date-input" type="date" value="${parseDate(task.date).toISOString().slice(0,10)}"></div>
+              <div class="help">카테고리는 그대로 유지되고, 선택한 날짜의 목록에서 바로 확인할 수 있어요.</div>
+              <div class="btn-row"><button class="btn cancel" data-action="close-modal">취소</button><button class="btn save" data-action="save-move-task">이동</button></div>
+            </div>
+          </div>`;
+      }
+      if(state.modal.type === 'routine'){
+        const task = findTask(state.modal.taskId);
+        if(!task) return '';
+        const form = state.modal.form;
+        return `
+          <div class="overlay" data-action="overlay-close">
+            <div class="modal-card">
+              <div class="modal-title">루틴 등록하기</div>
+              <div class="field"><label class="label">할 일 이름</label><input id="routine-text" class="text-input" value="${esc(form.text)}"></div>
+              <div class="field"><label class="label">시작 날짜</label><input id="routine-start" class="date-input" type="date" value="${parseDate(form.startDate).toISOString().slice(0,10)}"></div>
+              <div class="field"><label class="label">종료 날짜</label><input id="routine-end" class="date-input" type="date" value="${form.endDate ? parseDate(form.endDate).toISOString().slice(0,10) : ''}"></div>
+              <div class="field"><label class="label">반복</label>
+                <select id="routine-repeat" class="select">
+                  <option value="daily" ${form.repeatType==='daily'?'selected':''}>매일</option>
+                  <option value="weekly" ${form.repeatType==='weekly'?'selected':''}>매주</option>
+                  <option value="biweekly" ${form.repeatType==='biweekly'?'selected':''}>격주</option>
+                  <option value="monthly" ${form.repeatType==='monthly'?'selected':''}>매월</option>
+                  <option value="yearly" ${form.repeatType==='yearly'?'selected':''}>매년</option>
+                </select>
+              </div>
+              ${(form.repeatType==='weekly' || form.repeatType==='biweekly') ? `
+                <div class="field"><label class="label">반복 요일</label>
+                  <div class="option-row">${WEEK_LABELS.map(w=>`<button class="option-chip ${(form.weekdays||[]).includes(w.v)?'on':''}" data-action="toggle-weekday" data-value="${w.v}">${w.l}</button>`).join('')}</div>
+                </div>` : ''}
+              ${form.repeatType==='monthly' ? `
+                <div class="field"><label class="label">매월 반복 날짜 선택</label>
+                  <div class="month-picker-grid">${Array.from({length:31},(_,i)=>i+1).map(d=>`<button class="month-day ${(form.monthDays||[]).includes(d)?'on':''}" data-action="toggle-monthday" data-value="${d}">${d}</button>`).join('')}</div>
+                  <div class="help">여러 날짜를 선택하면 매달 해당 날짜마다 반복돼요.</div>
+                </div>` : ''}
+              ${form.repeatType==='yearly' ? `<div class="help">매년 반복은 시작 날짜의 월/일을 기준으로 반복돼요.</div>` : ''}
+              <div class="btn-row"><button class="btn cancel" data-action="close-modal">취소</button><button class="btn save" data-action="save-routine">루틴 저장</button></div>
+            </div>
+          </div>`;
+      }
+      return '';
+    }
+
+    function render(){
+      ensureVisibleRoutineData();
+      normalizeOrders();
+      sortCats();
+      syncReflectionDraft();
+      const selectedTasks = getSelectedDayTasks();
+      const done = selectedTasks.filter(t=>t.done).length;
+      const total = selectedTasks.length;
+      const pct = total ? Math.round(done/total*100) : 0;
+      const {y,m} = monthParts(state.currentMonth);
+      const cells = monthCells(state.currentMonth);
+      const reflectionSaved = state.reflections[state.selectedDate];
+      const root = document.getElementById('app');
+      root.innerHTML = `
+        <div class="app">
+          <div class="top-card">
+            <div class="title-row">
+              <div class="title">
+                <h1>오늘의 <span>할 일</span></h1>
+                <div class="sub">날짜가 바뀌면 자동으로 오늘 날짜 목록으로 넘어가요</div>
+              </div>
+              <div class="header-actions">
+                <button class="pill-btn" data-action="go-today">오늘</button>
+              </div>
+            </div>
+            <div class="today-banner">
+              <div class="today-badge">
+                <div class="today-kicker">today</div>
+                <div class="today-date">${todayFullLabel(todayStr())}</div>
+                <div class="today-note">현재 보고 있는 목록: ${fmtDate(state.selectedDate)}</div>
+              </div>
+              <div class="sync-card">
+                <input id="room-code-input" class="sync-input" value="${esc(state.roomInput || '')}" placeholder="입장코드">
+                <button class="ghost-btn" data-action="create-room-code">코드 생성</button>
+                <button class="ghost-btn" data-action="join-room-code">입장</button>
+                <button class="ghost-btn" data-action="copy-room-code">복사</button>
+                <div class="sync-status">${esc(state.syncNotice || (canUseCloud() ? '입장코드로 여러 기기 동기화 가능' : '클라우드 저장소 연결 필요'))}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="main-layout">
+            <aside class="left-pane">
+              <div class="shell-card left-block">
+                <div class="left-label">calendar</div>
+                <div class="quick-row">
+                  <div class="quick-left">
+                    <button class="calendar-toggle" data-action="toggle-calendar"><span class="mini-cal">🗓️</span><span>${state.showCalendar ? '달력 접기' : '달력 펼치기'}</span></button>
+                  </div>
+                </div>
+                <div class="summary" style="margin-top:10px;">
+                  <div class="summary-top">
+                    <div>
+                      <div class="summary-title">선택한 날짜 진행률</div>
+                      <div class="summary-num">${pct}<small>%</small></div>
+                    </div>
+                    <div class="mini">완료 ${done} / 전체 ${total}</div>
+                  </div>
+                  <div class="progress"><div class="bar" style="width:${pct}%"></div></div>
+                </div>
+                ${state.showCalendar ? `<div class="month-wrap">
+                  <div class="month-head">
+                    <button class="month-nav" data-action="prev-month">‹</button>
+                    <div class="month-title">${y}년 ${MONTH_LABELS[m-1]}</div>
+                    <button class="month-nav" data-action="next-month">›</button>
+                  </div>
+                  <div class="week-head">
+                    <div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="wknd">토</div><div class="wknd">일</div>
+                  </div>
+                  <div class="month-grid">
+                    ${cells.map(c=>{
+                      const pend = pendingCountByDate(c.date);
+                      const count = taskCountByDate(c.date);
+                      const dots = Math.min(pend,3);
+                      const cls = ['day-cell', c.inMonth?'':'other', c.date===todayStr()?'today':'', c.date===state.selectedDate?'selected':''].join(' ').trim();
+                      return `<button class="${cls}" data-action="select-day" data-date="${c.date}"><div class="day-num">${parseDate(c.date).getDate()}</div><div><div class="day-dots">${Array.from({length:dots},()=>'<span class="dot"></span>').join('')}</div><div class="day-count">${count?`할 일 ${count}`:''}</div></div></button>`;
+                    }).join('')}
+                  </div>
+                </div>` : ''}
+              </div>
+
+              ${state.showReflection ? `<div class="reflect-card"><div class="reflect-top"><div style="display:flex;align-items:center;gap:12px;"><div class="moon-face">🌙</div><div><div class="reflect-title">오늘 평가는 어땠어?</div><div class="reflect-sub">${fmtDate(state.selectedDate)} 기분이랑 메모를 귀엽게 남겨봐</div></div></div>${reflectionSaved?.savedAt ? `<div class="reflect-badge">저장됨</div>` : `<button class="moon-btn" data-action="toggle-reflection">닫기</button>`}</div><div class="mood-row">${MOODS.map(m=>`<button class="mood-chip ${state.reflectionDraft.mood===m.v?'on':''}" data-action="set-reflection-mood" data-mood="${m.v}">${m.v} ${m.l}</button>`).join('')}</div><textarea id="reflection-memo" class="reflect-text" placeholder="오늘 잘한 것, 아쉬운 것, 내일 챙길 것을 적어보세요">${esc(state.reflectionDraft.memo || '')}</textarea><div class="reflect-actions"><div class="reflect-note">${reflectionSaved?.savedAt ? `최근 저장: ${new Date(reflectionSaved.savedAt).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}` : '아직 저장 전'}</div><button class="reflect-save" data-action="save-reflection">저장하기</button></div></div>` : `<div class="shell-card left-block"><div class="left-label">reflection</div><button class="calendar-toggle" data-action="toggle-reflection"><span class="mini-cal">🌙</span><span>오늘 평가 열기</span></button></div>`}
+            </aside>
+
+            <main class="right-pane">
+              <div class="sections">
+            ${state.cats.length ? state.cats.map(cat=>{
+              const catTasks = selectedTasks.filter(t=>t.catId===cat.id);
+              return `<section class="section">
+                <div class="category-card" style="border-color:${cat.color}33;">
+                  <div class="category-card-head" style="background:linear-gradient(135deg, ${cat.color}22, ${cat.color}0D);border-bottom-color:${cat.color}22;">
+                    <span class="section-dot" style="background:${cat.color}"></span>
+                    <div class="section-name">${esc(cat.name)}</div>
+                    <button class="icon-btn" data-action="open-edit-category" data-cat-id="${cat.id}">✏️</button>
+                    <button class="icon-btn" data-action="remove-category" data-cat-id="${cat.id}">🗑️</button>
+                  </div>
+                  <div class="category-card-body">
+                    ${[1,2,3].map(p=>{
+                      const meta = PRIORITY_META[p];
+                      const list = catTasks.filter(t=>t.priority===p).sort((a,b)=>a.order-b.order);
+                      return `<div class="priority-group">
+                        <div class="priority-head">
+                          <span class="priority-pill" style="background:${meta.color}22;color:${meta.color}">${meta.label}</span>
+                          <span class="priority-line" style="background:${meta.color}33"></span>
+                        </div>
+                        <div class="task-list" data-drop-cat="${cat.id}" data-drop-priority="${p}">
+                          ${list.length ? list.map(task=>`<div class="task-row" draggable="true" data-task-id="${task.id}" data-row-id="${task.id}" style="border-color:${cat.color}22;">
+                            <button class="drag" title="드래그로 우선순위 이동">⠿</button>
+                            <button class="chk ${task.done?'done':''}" data-action="toggle-done" data-task-id="${task.id}">${task.done?'✓':''}</button>
+                            <button class="task-main" data-action="open-task-sheet" data-task-id="${task.id}">
+                              <div class="task-text ${task.done?'done':''}">${esc(task.text)}</div>
+                              ${task.routineId ? `<div class="meta-row"><span class="meta-chip">루틴</span></div>` : ''}
+                            </button>
+                            <div class="task-action">›</div>
+                          </div>`).join('') : '<div class="empty-drop">여기로 드래그하면 이 순위로 바뀌어요.</div>'}
+                        </div>
+                      </div>`;
+                    }).join('')}
+                    <div class="add-row">
+                      <input class="add-input" data-cat="${cat.id}" placeholder="${metaPlaceholder(cat.name)}">
+                      <button class="add-go" data-action="add-task" data-cat-id="${cat.id}">추가</button>
+                    </div>
+                  </div>
+                </div>
+              </section>`;
+            }).join('') : '<div class="empty-state">아직 카테고리가 없어요. 아래 + 버튼으로 먼저 카테고리를 만들어보세요.</div>'}
+          </div>
+
+              </div>
+            </main>
+          </div>
+
+          <button class="fab" data-action="open-add-category">＋</button>
+          ${renderModal()}
+        </div>`;
+    }
+
+    function metaPlaceholder(name){ return `${name}에 할 일 추가`; }
+
+    const root = document.getElementById('app');
+    root.addEventListener('click', (e)=>{
+      const btn = e.target.closest('[data-action]');
+      if(!btn) return;
+      const action = btn.dataset.action;
+      if(action === 'go-today'){ state.selectedDate=todayStr(); state.currentMonth=monthKey(state.selectedDate); state.reflectionDraftDate=''; render(); return; }
+      if(action === 'prev-month'){ state.currentMonth = shiftMonth(state.currentMonth,-1); if(!isSameMonth(state.currentMonth,state.selectedDate)){ const {y,m}=monthParts(state.currentMonth); state.selectedDate = toDateStr(new Date(y,m-1,1)); } state.reflectionDraftDate=''; render(); return; }
+      if(action === 'next-month'){ state.currentMonth = shiftMonth(state.currentMonth,1); if(!isSameMonth(state.currentMonth,state.selectedDate)){ const {y,m}=monthParts(state.currentMonth); state.selectedDate = toDateStr(new Date(y,m-1,1)); } state.reflectionDraftDate=''; render(); return; }
+      if(action === 'select-day'){ state.selectedDate = btn.dataset.date; state.currentMonth = monthKey(state.selectedDate); state.reflectionDraftDate=''; render(); return; }
+      if(action === 'toggle-done'){ toggleDone(btn.dataset.taskId); return; }
+      if(action === 'open-task-sheet'){ openModal('taskSheet',{taskId:btn.dataset.taskId}); return; }
+      if(action === 'open-add-category'){ openModal('category',{mode:'add'}); return; }
+      if(action === 'open-edit-category'){ openModal('category',{mode:'edit',catId:btn.dataset.catId}); return; }
+      if(action === 'remove-category'){ removeCategory(btn.dataset.catId); return; }
+      if(action === 'save-category'){ saveCategory(); return; }
+      if(action === 'create-room-code'){ createRoomAndSave(); return; }
+      if(action === 'join-room-code'){ joinRoomFromInput(); return; }
+      if(action === 'copy-room-code'){ copyRoomCode(); return; }
+      if(action === 'add-task'){ addTask(btn.dataset.catId); return; }
+      if(action === 'toggle-calendar'){ state.showCalendar = !state.showCalendar; render(); return; }
+      if(action === 'toggle-reflection'){ state.showReflection = !state.showReflection; render(); return; }
+      if(action === 'set-reflection-mood'){ state.reflectionDraft.mood = btn.dataset.mood === state.reflectionDraft.mood ? '' : btn.dataset.mood; render(); return; }
+      if(action === 'save-reflection'){ saveReflectionEntry(); return; }
+      if(action === 'overlay-close'){ if(e.target === btn) closeModal(); return; }
+      if(action === 'close-modal'){ closeModal(); return; }
+      if(action === 'open-edit-task'){ openModal('editTask',{taskId:btn.dataset.taskId}); return; }
+      if(action === 'save-task-edit'){ saveTaskEdit(); return; }
+      if(action === 'delete-task'){ if(confirm('이 할 일을 삭제할까요?')) deleteTask(btn.dataset.taskId); return; }
+      if(action === 'delete-routine'){ deleteRoutineSeries(btn.dataset.routineId); return; }
+      if(action === 'open-move-task'){ openModal('moveTask',{taskId:btn.dataset.taskId}); return; }
+      if(action === 'save-move-task'){ moveTaskDate(); return; }
+      if(action === 'open-routine'){ openModal('routine',{taskId:btn.dataset.taskId, form: buildRoutineDefaults(findTask(btn.dataset.taskId))}); return; }
+      if(action === 'toggle-weekday'){ toggleWeekday(Number(btn.dataset.value)); return; }
+      if(action === 'toggle-monthday'){ toggleMonthDay(Number(btn.dataset.value)); return; }
+      if(action === 'save-routine'){ saveRoutine(); return; }
+    });
+
+    root.addEventListener('change', (e)=>{
+      if(!state.modal || state.modal.type !== 'routine') return;
+      if(e.target.id === 'routine-repeat'){
+        syncRoutineDraft();
+        state.modal.form.repeatType = e.target.value;
+        render();
+      }
+    });
+
+    root.addEventListener('input', (e)=>{
+      if(e.target.id === 'room-code-input'){
+        state.roomInput = roomCodeDisplay(e.target.value);
+        e.target.value = state.roomInput;
+      }
+    });
+
+    root.addEventListener('keydown', (e)=>{
+      if(e.target.classList.contains('add-input') && e.key === 'Enter'){
+        addTask(e.target.dataset.cat);
+      }
+    });
+
+    root.addEventListener('dragstart', (e)=>{
+      const row = e.target.closest('.task-row');
+      if(!row) return;
+      state.dragTaskId = row.dataset.taskId;
+      row.style.opacity = '.45';
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', row.dataset.taskId);
+    });
+    root.addEventListener('dragend', (e)=>{
+      const row = e.target.closest('.task-row');
+      if(row) row.style.opacity = '1';
+      state.dragTaskId = null;
+      document.querySelectorAll('.task-list').forEach(el=>el.classList.remove('is-over'));
+    });
+    root.addEventListener('dragover', (e)=>{
+      const zone = e.target.closest('[data-drop-cat][data-drop-priority]');
+      if(!zone || !state.dragTaskId) return;
+      e.preventDefault();
+      zone.classList.add('is-over');
+    });
+    root.addEventListener('dragleave', (e)=>{
+      const zone = e.target.closest('[data-drop-cat][data-drop-priority]');
+      if(zone) zone.classList.remove('is-over');
+    });
+    root.addEventListener('drop', (e)=>{
+      const zone = e.target.closest('[data-drop-cat][data-drop-priority]');
+      if(!zone || !state.dragTaskId) return;
+      e.preventDefault();
+      zone.classList.remove('is-over');
+      const beforeRow = e.target.closest('[data-row-id]');
+      moveTaskByDrop(state.dragTaskId, zone.dataset.dropCat || zone.dataset.cat || zone.dataset.dropCatId || zone.dataset.dropCat, zone.dataset.dropPriority || zone.dataset.priority, beforeRow?.dataset.rowId);
+    });
+
+    async function boot(){
+      load();
+      await hydrateRoomFromCloud();
+      autoAdvanceToToday(true);
+      startRoomPolling();
+      startDayWatcher();
+      render();
+    }
+
+    boot();
+  </script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v833ccba57c9e4d2798f2e76cebdd09a11778172276447" integrity="sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>
